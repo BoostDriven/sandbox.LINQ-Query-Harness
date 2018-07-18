@@ -45,6 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="LinqSamples.cs" />
+    <Compile Include="ObjectDumper.cs" />
     <Compile Include="SampleForm.cs">
       <SubType>Form</SubType>
     </Compile>

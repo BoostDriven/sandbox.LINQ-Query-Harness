@@ -303,7 +303,9 @@ namespace SampleQueries
 
         [Category("Projection Operators")]
         [Title("SelectMany - Compound from 1")]
-        [Description("")]
+        [Description("This sample uses a compound from clause to make a query that returns all pairs " +
+                     "of numbers from both arrays in which the number from numbersA is less than the number " +
+                     "from numbersB.")]
         public void Linq14()
         {
             int[] numbersA = { 0, 2, 4, 5, 6, 8, 9 };
@@ -321,15 +323,466 @@ namespace SampleQueries
             }
         }
 
+        [Category("Projection Operators")]
+        [Title("SelectMany - Compound from 2")]
+        [Description("This sample uses a compound from clause to select all orders where the " +
+                      "order total is less than 500.00")]
+        public void Linq15()
+        {
+            List<Customer> customers = GetCustomerList();
+
+            var orders = from cust in customers
+                         from order in cust.Orders
+                         where order.Total > 500.00M
+                         select new { cust.CustomerID, order.OrderID, order.Total };
+
+            ObjectDumper.Write(orders);
+        }
+
+        [Category("Projection Operators")]
+        [Title("SelectMany - Compound from 3")]
+        [Description("This sample uses a compund from clause to select all orders where the " +
+                      "order was made in 1998 or later.")]
+        public void Linq16()
+        {
+            List<Customer> customers = GetCustomerList();
+
+            var orders =
+                from cust in customers
+                from order in cust.Orders
+                where order.OrderDate >= new DateTime(1998, 1, 1)
+                select new { cust.CustomerID, order.OrderID, order.OrderDate };
+
+            ObjectDumper.Write(orders);
+        }
+
+        [Category("Projection Operators")]
+        [Title("SelectMany - With let")]
+        [Description("This sample uses a compound from clause to select all orders where the " +
+                     "order total is greater than 2000.00 and uses a let clause to avoid " +
+                     "requesting the total twice.")]
+        public void Linq17()
+        {
+            List<Customer> customers = GetCustomerList();
+
+            var orders =
+                from cust in customers
+                from order in cust.Orders
+                let total = order.Total
+                where total >= 2000.0M
+                select new { cust.CustomerID, order.OrderID, total };
+
+            ObjectDumper.Write(orders);
+        }
+
+        [Category("Projection Operators")]
+        [Title("SelectMany - Compound from")]
+        [Description("This sample uses compound from clauses so that filtering on customers can " +
+                     "be done before selecting their orders.  This makes the query more efficient by " +
+                     "not selecting and then discarding orders for customers outside of Washington.")]
+        public void Linq18()
+        {
+            List<Customer> customers = GetCustomerList();
+
+            DateTime cutoffDate = new DateTime(1997, 1, 1);
+
+            var orders = from cust in customers
+                         where cust.Region == "WA"
+                         from order in cust.Orders
+                         where order.OrderDate >= cutoffDate
+                         select new { cust.CustomerID, order.OrderID };
+
+            ObjectDumper.Write(orders);
+        }
+
+        [Category("Projection Operators")]
+        [Title("SelectMany - Indexed")]
+        [Description("This sample uses an indexed SelectMany clause to select all orders, " +
+                     "while referring to customers by the order in which they are returned " +
+                     "from the query.")]
+        public void Linq19()
+        {
+            List<Customer> customers = GetCustomerList();
+
+            var customerOrders = customers.SelectMany(
+                                    (cust, custIndex) => cust.Orders.Select(o => "Customer #" + (custIndex + 1) +
+                                                                                 " has an order with OrderID " + o.OrderID));
+
+            ObjectDumper.Write(customerOrders);
+        }
+
+        [Category("Partitioning Operators")]
+        [Title("Take - Sample")]
+        [Description("This sample uses Take to get only the first 3 elements of the array.")]
+        public void Linq20()
+        {
+            int[] numbers = { 5, 4, 1, 3, 9, 8, 6, 7, 2, 0 };
+
+            var first3Numbers = numbers.Take(3);
+
+            Console.WriteLine("Fist 3 numbers:");
+            foreach (var n in first3Numbers)
+            {
+                Console.WriteLine(n);
+            }
+        }
+
+        [Category("Partitioning Operators")]
+        [Title("Take - Nested")]
+        [Description("This sample uses Take to get the first 3 orders from customers " +
+                     "in Washington.")]
+        public void Linq21()
+        {
+            List<Customer> customers = GetCustomerList();
+
+            var first3WAOrders = (
+                from cust in customers
+                from order in cust.Orders
+                where cust.Region == "WA"
+                select new { cust.CustomerID, order.OrderID, order.OrderDate })
+                .Take(3);
+
+            Console.WriteLine("First 3 orders in WA:");
+            foreach (var order in first3WAOrders)
+            {
+                ObjectDumper.Write(order);
+            }
+        }
+
+        [Category("Partitioning Operators")]
+        [Title("Skip - Simple")]
+        [Description("This sample uses Skip to get all but the first four elements of " +
+                     "the array.")]
+        public void Linq22()
+        {
+            int[] numbers = { 5, 4, 1, 3, 9, 8, 6, 7, 2, 0 };
+
+            var allButFirst4Numbers = numbers.Skip(4);
+
+            Console.WriteLine("All but first 4 numbers:");
+            foreach (var n in allButFirst4Numbers)
+            {
+                Console.WriteLine(n);
+            }
+        }
+
+        [Category("Partitioning Operators")]
+        [Title("Skip - Nested")]
+        [Description("This sample uses Take to get all but the first 2 orders from customers " +
+                     "in Washington.")]
+        public void Linq23()
+        {
+            List<Customer> customers = GetCustomerList();
+
+            var waOrders =
+                from cust in customers
+                from order in cust.Orders
+                where cust.Region == "WA"
+                select new { cust.CustomerID, order.OrderID, order.OrderDate };
+
+            var allButFirst2Orders = waOrders.Skip(2);
+
+            Console.WriteLine("All but first 2 orders in WA:");
+            foreach (var order in allButFirst2Orders)
+            {
+                ObjectDumper.Write(order);
+            }
+        }
+
+        [Category("Partitioning Operators")]
+        [Title("TakeWhile - Simple")]
+        [Description("This sample uses TakeWhile to return elements starting from the " +
+                     "beginning of the array until a number is read whose value is not less than 6.")]
+        public void Linq24()
+        {
+            int[] numbers = { 5, 4, 1, 3, 9, 8, 6, 7, 2, 0 };
+
+            var firstNumbersLessThan6 = numbers.TakeWhile(n => n < 6);
+
+            Console.WriteLine("First numbers less than 6:");
+            foreach (var num in firstNumbersLessThan6)
+            {
+                Console.WriteLine(num);
+            }
+        }
+
+        [Category("Partitioning Operators")]
+        [Title("TakeWhile - Indexed")]
+        [Description("This sample uses TakeWhile to return elements starting from the " +
+                    "beginning of the array until a number is hit that is less than its position " +
+                    "in the array.")]
+        public void Linq25()
+        {
+            int[] numbers = { 5, 4, 1, 3, 9, 8, 6, 7, 2, 0 };
+
+            var firstSmallNumbers = numbers.TakeWhile((n, index) => n >= index);
+
+            Console.WriteLine("First numbers not less than their position:");
+            foreach (var n in firstSmallNumbers)
+            {
+                Console.WriteLine(n);
+            }
+        }
+
+        [Category("Partitioning Operators")]
+        [Title("SkipWhile - Simple")]
+        [Description("This sample uses SkipWhile to get the elements of the array " +
+                    "starting from the first element divisible by 3.")]
+        public void Linq26()
+        {
+            int[] numbers = { 5, 4, 1, 3, 9, 8, 6, 7, 2, 0 };
+
+            // In the lambda expression, 'n' is the input parameter that identifies each
+            // element in the collection in succession. It is is inferred to be
+            // of type int because numbers is an int array.
+            var allButFirst3Numbers = numbers.SkipWhile(n => n % 3 != 0);
+
+            Console.WriteLine("All elements starting from first element divisible by 3:");
+            foreach (var n in allButFirst3Numbers)
+            {
+                Console.WriteLine(n);
+            }
+        }
+
+        [Category("Partitioning Operators")]
+        [Title("SkipWhile - Indexed")]
+        [Description("This sample uses SkipWhile to get the elements of the array " +
+                    "starting from the first element less than its position.")]
+        public void Linq27()
+        {
+            int[] numbers = { 5, 4, 1, 3, 9, 8, 6, 7, 2, 0 };
+
+            var laterNumbers = numbers.SkipWhile((n, index) => n >= index);
+
+            Console.WriteLine("All elements starting from first element less than its position:");
+            foreach (var n in laterNumbers)
+            {
+                Console.WriteLine(n);
+            }
+        }
+
+        [Category("Ordering Operators")]
+        [Title("OrderBy - Simple 1")]
+        [Description("This sample uses orderby to sort a list of words alphabetically.")]
+        public void Linq28()
+        {
+            string[] words = { "cherry", "apple", "blueberry" };
+
+            var sortedWords =
+                from word in words
+                orderby word
+                select word;
+
+            Console.WriteLine("The sorted list of words:");
+            foreach (var w in sortedWords)
+            {
+                Console.WriteLine(w);
+            }
+        }
+
+        [Category("Ordering Operators")]
+        [Title("OrderBy - Simple 2")]
+        [Description("This sample uses orderby to sort a list of words by length.")]
+        public void Linq29()
+        {
+            string[] words = { "cherry", "apple", "blueberry" };
+
+            var sortedWords =
+                from word in words
+                orderby word.Length
+                select word;
+
+            Console.WriteLine("The sorted list of words (by length):");
+            foreach (var w in sortedWords)
+            {
+                Console.WriteLine(w);
+            }
+        }
+
+        [Category("Ordering Operators")]
+        [Title("OrderBy - Simple 3")]
+        [Description("This sample uses orderby to sort a list of products by name. " +
+                    "Use the \"descending\" keyword at the end of the clause to perform a reverse ordering.")]
+        public void Linq30()
+        {
+            List<Product> products = GetProductList();
+
+            var sortedProducts =
+                from prod in products
+                orderby prod.ProductName
+                select prod;
+
+            ObjectDumper.Write(sortedProducts);
+        }
+
+        // Custom comparer for use with ordering operators
+        public class CaseInsensitiveComparer : IComparer<string>
+        {
+            public int Compare(string x, string y)
+            {
+                return string.Compare(x, y, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        [Category("Ordering Operators")]
+        [Title("OrderBy - Comparer")]
+        [Description("This sample uses an OrderBy clause with a custom comparer to " +
+                     "do a case-insensitive sort of the words in an array.")]
+        [LinkedClass("CaseInsensitiveComparer")]
+        public void Linq31()
+        {
+            string[] words = { "aPPLE", "AbAcUs", "bRaNcH", "BlUeBeRrY", "ClOvEr", "cHeRry" };
+
+            var sortedWords = words.OrderBy(a => a, new CaseInsensitiveComparer());
+
+            ObjectDumper.Write(sortedWords);
+        }
+
+        [Category("Ordering Operators")]
+        [Title("OrderByDescending - Simple 1")]
+        [Description("This sample uses orderby and descending to sort a list of " +
+                     "doubles from highest to lowest.")]
+        public void Linq32()
+        {
+            double[] doubles = { 1.7, 2.3, 1.9, 4.1, 2.9 };
+
+            var sortedDoubles =
+                from d in doubles
+                orderby d descending
+                select d;
+
+            Console.WriteLine("The doubles from highest to lowest:");
+            foreach (var d in sortedDoubles)
+            {
+                Console.WriteLine(d);
+            }
+        }
+
+        [Category("Ordering Operators")]
+        [Title("OrderByDescending - Simple 2")]
+        [Description("This sample uses orderby to sort a list of products by units in stock " +
+                     "from highest to lowest.")]
+        public void Linq33()
+        {
+            List<Product> products = GetProductList();
+
+            var sortedProducts =
+                from prod in products
+                orderby prod.UnitsInStock descending
+                select prod;
+
+            ObjectDumper.Write(sortedProducts);
+        }
+
+        [Category("Ordering Operators")]
+        [Title("OrderByDescending - Comparer")]
+        [Description("This sample uses method syntax to call OrderByDescending because it " +
+                    " enables you to use a custom comparer.")]
+        [LinkedClass("CaseInsensitiveComparer")]
+        public void Linq34()
+        {
+            string[] words = { "aPPLE", "AbAcUs", "bRaNcH", "BlUeBeRrY", "ClOvEr", "cHeRry" };
+
+            var sortedWords = words.OrderByDescending(a => a, new CaseInsensitiveComparer());
+
+            ObjectDumper.Write(sortedWords);
+        }
+
+        [Category("Ordering Operators")]
+        [Title("ThenBy - Simple")]
+        [Description("This sample uses a compound orderby to sort a list of digits, " +
+                     "first by length of their name, and then alphabetically by the name itself.")]
+        public void Linq35()
+        {
+            string[] digits = { "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
+
+            var sortedDigits =
+                from digit in digits
+                orderby digit.Length, digit
+                select digit;
+
+            Console.WriteLine("Sorted digits:");
+            foreach (var d in sortedDigits)
+            {
+                Console.WriteLine(d);
+            }
+        }
+
+        [Category("Ordering Operators")]
+        [Title("ThenBy - Comparer")]
+        [Description("The first query in this sample uses method syntax to call OrderBy and ThenBy with a custom comparer to " +
+                     "sort first by word length and then by a case-insensitive sort of the words in an array. " +
+                     "The second two queries show another way to perform the same task.")]
+        [LinkedClass("CaseInsensitiveComparer")]
+        public void Linq36()
+        {
+            string[] words = { "aPPLE", "AbAcUs", "bRaNcH", "BlUeBeRrY", "ClOvEr", "cHeRry" };
+
+            var sortedWords =
+                words.OrderBy(a => a.Length)
+                     .ThenBy(a => a, new CaseInsensitiveComparer());
+
+            // Another way. TODO is this use of ThenBy correct? It seems to work on this sample array.
+            var sortedWords2 =
+                from word in words
+                orderby word.Length
+                select word;
+
+            var sortedWords3 = sortedWords2.ThenBy(a => a, new CaseInsensitiveComparer());
+
+            ObjectDumper.Write(sortedWords);
+
+            ObjectDumper.Write(sortedWords3);
+        }
+
+        [Category("Ordering Operators")]
+        [Title("ThenByDescending - Simple")]
+        [Description("This sample uses a compound orderby to sort a list of products, " +
+                     "first by category, and then by unit price, from highest to lowest.")]
+        public void Linq37()
+        {
+            List<Product> products = GetProductList();
+
+            var sortedProducts =
+                from prod in products
+                orderby prod.Category, prod.UnitPrice descending
+                select prod;
+
+            ObjectDumper.Write(sortedProducts);
+        }
+
+        [Category("Ordering Operators")]
+        [Title("ThenByDescending - Comparer")]
+        [Description("This sample uses an OrderBy and a ThenBy clause with a custom comparer to " +
+                     "sort first by word length and then by a case-insensitive descending sort " +
+                     "of the words in an array.")]
+        [LinkedClass("CaseInsensitiveComparer")]
+        public void Linq38()
+        {
+            string[] words = { "aPPLE", "AbAcUs", "bRaNcH", "BlUeBeRrY", "ClOvEr", "cHeRry" };
+
+            var sortedWords =
+                words.OrderBy(a => a.Length)
+                     .ThenByDescending(a => a, new CaseInsensitiveComparer());
+
+            ObjectDumper.Write(sortedWords);
+        }
+
         [Category("")]
         [Title("")]
         [Description("")]
-        public void Linq15()
+        public void Linq22()
         {
 
         }
 
+        [Category("")]
+        [Title("")]
+        [Description("")]
+        public void Linq23()
+        {
 
+        }
 
         public List<Product> GetProductList()
         {
